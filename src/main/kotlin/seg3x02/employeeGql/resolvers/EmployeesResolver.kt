@@ -7,6 +7,8 @@ import org.springframework.stereotype.Controller
 import seg3x02.employeeGql.entity.Employee
 import seg3x02.employeeGql.repository.EmployeesRepository
 import seg3x02.employeeGql.resolvers.types.CreateEmployeeInput
+import java.util.*
+
 
 @Controller
 class EmployeesResolver(private val employeeRepository: EmployeesRepository) {
@@ -19,7 +21,7 @@ class EmployeesResolver(private val employeeRepository: EmployeesRepository) {
 
     @MutationMapping
     fun newEmployee(@Argument createEmployeeInput: CreateEmployeeInput): Employee {
-        val employee = Employee(
+        var employee = Employee(
             name = createEmployeeInput.name,
             dateOfBirth = createEmployeeInput.dateOfBirth,
             city = createEmployeeInput.city,
@@ -31,8 +33,33 @@ class EmployeesResolver(private val employeeRepository: EmployeesRepository) {
     }
 
     @MutationMapping
-    fun deleteEmployee(@Argument id: String): Boolean {
-        employeeRepository.deleteById(id)
-        return true
+    fun updateEmployee(
+        @Argument employeeId: String,
+        @Argument createEmployeeInput: CreateEmployeeInput
+    ): Employee? {
+        val existingEmployee = employeeRepository.findById(employeeId).orElse(null)
+
+        if (existingEmployee != null) {
+            existingEmployee.name = createEmployeeInput.name
+            existingEmployee.dateOfBirth = createEmployeeInput.dateOfBirth
+            existingEmployee.city = createEmployeeInput.city
+            existingEmployee.salary = createEmployeeInput.salary
+            existingEmployee.gender = createEmployeeInput.gender
+            existingEmployee.email = createEmployeeInput.email
+
+            return employeeRepository.save(existingEmployee)
+        }
+        return null
+    }
+
+    @MutationMapping
+    fun deleteEmployee(@Argument employeeId: String): Boolean {
+        return if (employeeRepository.existsById(employeeId)) {
+            employeeRepository.deleteById(employeeId)
+            true
+        } else {
+            false
+        }
     }
 }
+
